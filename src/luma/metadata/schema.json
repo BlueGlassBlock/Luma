@@ -8,7 +8,52 @@
                 "version": {
                     "type": "number"
                 }
+            },
+            "required": [
+                "version"
+            ]
+        },
+        "config": {
+            "type": "object",
+            "properties": {
+                "endpoints": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "format": {
+                    "type": "object",
+                    "description": "TODO"
+                }
+            },
+            "required": [
+                "endpoints"
+            ]
+        },
+        "storage": {
+            "type": "object"
+        },
+        "components": {
+            "type": "array"
+        },
+        "hooks": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "stage": {
+                        "type": "string",
+                        "description": "TODO: change to enum"
+                    },
+                    "endpoint": {
+                        "type": "string"
+                    }
+                }
             }
+        },
+        "modules": {
+            "type": "array"
         }
     }
 }

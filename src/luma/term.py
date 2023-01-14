@@ -146,7 +146,7 @@ class UI:
 
     def echo(
         self,
-        message: str = "",
+        message: Any = "",
         err: bool = False,
         verbosity: Verbosity = Verbosity.NORMAL,
         **kwargs: Any,

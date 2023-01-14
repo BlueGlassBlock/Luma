@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import abc
 import argparse
 
+import luma.core
 from luma.cli.utils import LumaFormatter, Option
 
 verbose_option = Option(
@@ -55,7 +58,7 @@ class Command(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def handle(self, options: argparse.Namespace) -> None:
+    def handle(self, core: luma.core.Core, options: argparse.Namespace) -> None:
         """The command handler function.
         :param options: the parsed Namespace object
         """

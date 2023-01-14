@@ -4,3 +4,7 @@ class LumaError(Exception):
 
 class LumaArgumentError(LumaError):
     pass
+
+
+class LumaUsageError(LumaError):
+    pass

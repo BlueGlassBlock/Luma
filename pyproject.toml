@@ -26,7 +26,8 @@ dev = [
 [project.scripts]
 luma = "luma.core:main"
 
-# [project.entry-points."luma.plugin"]
+[project.entry-points."luma.plugin"]
+init = "luma.commands.init:plugin"
 
 [tool.black]
 line-length = 120
