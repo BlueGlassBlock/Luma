@@ -1,0 +1,155 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "title": "luma.content.LumaConfig",
+    "properties": {
+        "config": {
+            "$ref": "#/$defs/luma.content.Config"
+        },
+        "modules": {
+            "type": "array",
+            "items": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/luma.content.SingleModule"
+                    },
+                    {
+                        "$ref": "#/$defs/luma.content.MultiModule"
+                    }
+                ]
+            }
+        },
+        "storage": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "components": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/luma.content.Component"
+            }
+        },
+        "hooks": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/luma.content.Hook"
+            }
+        },
+        "metadata": {
+            "$ref": "#/$defs/luma.content.Metadata"
+        },
+        "$schema": {
+            "type": "string"
+        }
+    },
+    "$defs": {
+        "luma.content.Config": {
+            "type": "object",
+            "title": "luma.content.Config",
+            "properties": {
+                "endpoints": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "format": {
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            },
+            "additionalProperties": false
+        },
+        "luma.content.SingleModule": {
+            "type": "object",
+            "title": "luma.content.SingleModule",
+            "properties": {
+                "endpoint": {
+                    "type": "string"
+                },
+                "type": {
+                    "enum": [
+                        "single"
+                    ],
+                    "default": "single"
+                }
+            },
+            "required": [
+                "endpoint"
+            ],
+            "additionalProperties": false
+        },
+        "luma.content.MultiModule": {
+            "type": "object",
+            "title": "luma.content.MultiModule",
+            "properties": {
+                "endpoint": {
+                    "type": "string"
+                },
+                "type": {
+                    "enum": [
+                        "multi"
+                    ]
+                },
+                "exclude": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "endpoint",
+                "type"
+            ],
+            "additionalProperties": false
+        },
+        "luma.content.Component": {
+            "type": "object",
+            "title": "luma.content.Component",
+            "properties": {
+                "endpoint": {
+                    "type": "string"
+                },
+                "args": {
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            },
+            "required": [
+                "endpoint"
+            ],
+            "additionalProperties": false
+        },
+        "luma.content.Hook": {
+            "type": "object",
+            "title": "luma.content.Hook",
+            "properties": {
+                "endpoint": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "endpoint",
+                "target"
+            ],
+            "additionalProperties": false
+        },
+        "luma.content.Metadata": {
+            "type": "object",
+            "title": "luma.content.Metadata",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "default": "0.1"
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

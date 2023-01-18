@@ -3,6 +3,7 @@ from pathlib import Path
 
 from luma.cli.command import Command
 from luma.core import Core
+from luma.exceptions import LumaUsageError
 
 
 def plugin(core: Core):
@@ -11,6 +12,7 @@ def plugin(core: Core):
 
 class InitCommand(Command):
     name = "init"
+    description = "Initialize a luma.toml"
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--non-interactive", default=False, help="Run in non-interactive mode.")
@@ -22,5 +24,4 @@ class InitCommand(Command):
             core.ui.echo("[warning]Running in non-interactive mode.")
         file = Path.cwd() / "luma.toml"
         if file.exists():
-            core.ui.echo("[warning][req]luma.toml[/req] already exists.")
-            raise ValueError
+            raise LumaUsageError("luma.toml already exists.")

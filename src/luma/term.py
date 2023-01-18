@@ -25,7 +25,7 @@ DEFAULT_THEME = {
     "primary": "cyan",
     "success": "green",
     "warning": "yellow",
-    "error": "red",
+    "error": "red bold",
     "info": "blue",
     "req": "bold green",
 }
@@ -72,8 +72,8 @@ def style(text: str, *args: str, style: str | None = None, **kwargs: Any) -> str
 
 class Verbosity(enum.IntEnum):
     NORMAL = 0
-    DETAIL = enum.auto()
-    DEBUG = enum.auto()
+    DETAIL = 1
+    DEBUG = 2
 
 
 LOG_LEVELS = {
@@ -148,7 +148,7 @@ class UI:
         self,
         message: Any = "",
         err: bool = False,
-        verbosity: Verbosity = Verbosity.NORMAL,
+        verbosity: Verbosity | int = Verbosity.NORMAL,
         **kwargs: Any,
     ) -> None:
         """print message using rich console

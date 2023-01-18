@@ -14,6 +14,20 @@ verbose_option = Option(
     help="-v for detailed output and -vv for more detailed",
 )
 
+bot_path_option = Option(
+    "-p",
+    "--path",
+    help="Specify bot directory (env var: LUMA_PROJECT_ROOT / PROJECT_ROOT)",
+)
+
+environment_option = Option(
+    "-e",
+    "--environment-manager",
+    help="Specify the environment manager, will guess by default (virtualenv / PDM / Poetry)",
+    choices=("pdm", "poetry", "venv"),
+    default="",
+)
+
 
 class Command(abc.ABC):
     """A CLI subcommand"""
@@ -50,12 +64,16 @@ class Command(abc.ABC):
             **kwargs,
         )
         command = cls(parser)
+
+        # Add necessary options
+        bot_path_option.add_to_parser(parser)
+        environment_option.add_to_parser(parser)
+
         parser.set_defaults(handler=command.handle)
 
-    @abc.abstractmethod
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         """Manipulate the argument parser to add more arguments"""
-        raise NotImplementedError
+        pass
 
     @abc.abstractmethod
     def handle(self, core: luma.core.Core, options: argparse.Namespace) -> None:
