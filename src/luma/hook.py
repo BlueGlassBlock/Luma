@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Callable
 
@@ -15,15 +14,13 @@ class HookTarget:
     core: list[Callable] = cp_field([])
     post: list[Callable] = cp_field([])
 
-    @contextmanager
-    def activate_hook(self, pre: bool = True, post: bool = True, *args):
-        if pre:
-            for fn in self.pre:
-                fn(*args)
-        yield
-        if post:
-            for fn in self.post:
-                fn(*args)
+    def warn_hooks(self, ui: UI, pre: bool = False, post: bool = False) -> None:
+        if pre and self.pre:
+            for pre_fn in self.pre:
+                ui.echo(f"[warning]pre_{self.name} hook {pre_fn.__module__}:{pre_fn.__qualname__} is not invoked!")
+        if post and self.post:
+            for post_fn in self.post:
+                ui.echo(f"[warning]post{self.name} hook {post_fn.__module__}:{post_fn.__qualname__} is not invoked!")
 
 
 class HookManager:
