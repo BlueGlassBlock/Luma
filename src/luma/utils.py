@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import copy
 import importlib
 import subprocess
 import sys
 from contextlib import suppress
+from dataclasses import field
 from pathlib import Path
 from typing import Any, Literal
 
@@ -26,29 +28,24 @@ def test_executable(executable: str) -> bool:
     )
 
 
-def guess_environment(project_root: Path) -> Literal["venv", "pdm", "poetry", None]:
+def guess_environment(project_root: Path) -> Literal["local", "pdm", "poetry", ""]:
     with suppress(Exception):
         build_backend: str = tomlkit.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))["build-system"]["build-backend"]  # type: ignore
         if "poetry" in build_backend and test_executable("poetry"):
             return "poetry"
         elif test_executable("pdm"):
             return "pdm"
-    proc = subprocess.run(
-        ["python", "-c", "import sys; print(sys.prefix); print(sys.base_prefix)"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=True,
-    )
-    if not proc.returncode:
-        output: None | str = None
-        with suppress(UnicodeDecodeError):
-            output = proc.stdout.decode()
-        if not output:
-            with suppress(UnicodeDecodeError):
-                output = proc.stdout.decode("utf-8")
-        if output:
-            sys_prefix, sys_base_prefix = output.splitlines()
-            return "venv" if sys_prefix != sys_base_prefix else None
+        proc = subprocess.run(
+            ["python", "-c", "import sys; print(sys.prefix); print(sys.base_prefix)", "-X", "utf8"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+        )
+        proc.check_returncode()
+        output = proc.stdout.decode("utf-8")
+        sys_prefix, sys_base_prefix = output.splitlines()
+        return "local" if sys_prefix != sys_base_prefix else ""
+    return ""
 
 
 def load_from_string(import_str: str) -> Any:
@@ -68,3 +65,7 @@ def load_from_string(import_str: str) -> Any:
         raise ImportError(message) from exc
 
     return instance
+
+
+def cp_field(value) -> Any:
+    return field(default_factory=lambda: copy.deepcopy(value))

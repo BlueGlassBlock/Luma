@@ -1,15 +1,13 @@
 import copy
 import importlib.resources
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Union
 
 from jsonschema import Draft202012Validator
 
-
-def cp_field(value) -> Any:
-    return field(default_factory=lambda: copy.deepcopy(value))
+from luma.utils import cp_field
 
 
 @dataclass
