@@ -24,6 +24,9 @@ dev = [
     "isort~=5.11",
     "pre-commit~=2.21",
     "kayaku~=0.5",
+    "graia-ariadne[graia]~=0.10",
+    "graiax-playwright~=0.2",
+    "graiax-shortcut~=0.2",
 ]
 
 [project.scripts]
@@ -34,8 +37,13 @@ init = "luma.commands.init:plugin"
 run = "luma.commands.run:plugin"
 self = "luma.commands.self:plugin"
 
+[project.entry-points."luma.component"]
+graia-ariadne = "luma.bundled.components.graia_ariadne:initialize"
+launart = "luma.bundled.components.launart:initialize"
+
 [tool.black]
 line-length = 120
+target-version = ["py38", "py39", "py310", "py311"]
 
 [tool.isort]
 profile = "black"

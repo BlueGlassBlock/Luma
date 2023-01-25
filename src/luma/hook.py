@@ -29,15 +29,18 @@ class HookManager:
         self.ui: UI = ui
         self.locked: bool = False
 
-    def add_hook(self, target: str, func: Callable) -> None:
+    def add_hook(self, target: str, func: Callable, exclusive: bool = False) -> None:
         stage = "core"
         if target.startswith(("pre_", "post_")):
             stage = target[:3]
             target = target[4:]
         hook_target = self.targets.setdefault(target, HookTarget(target))
+        target_fns: list[Callable] = getattr(hook_target, stage)
+        if func in target_fns and exclusive:
+            return
+        target_fns.append(func)
         self.ui.echo(
             f"Adding [primary]{func.__module__}:{func.__qualname__}[/primary] "
             f"to [req]{stage}[/req] of [info]{target}[/info]",
             verbosity=2,
         )
-        getattr(hook_target, stage).append(func)

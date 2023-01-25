@@ -9,11 +9,12 @@ r"""
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
 import importlib_metadata as pkg_meta
 from rich.markup import escape
@@ -21,17 +22,12 @@ from rich.traceback import Traceback
 from typing_extensions import Self
 
 from luma import term
-from luma.cli.command import (
-    Command,
-    bot_path_option,
-    environment_option,
-    verbose_option,
-)
+from luma.cli.command import Command, bot_path_option, python_option, verbose_option
 from luma.cli.utils import ErrorArgumentParser, LumaFormatter
 from luma.content import Component, LumaConfig, load_content
 from luma.exceptions import LumaArgumentError, LumaConfigError, LumaError
 from luma.hook import HookManager
-from luma.utils import guess_environment, load_from_string
+from luma.utils import load_from_string
 
 
 class Core:
@@ -44,7 +40,7 @@ class Core:
         self.subparsers = self.parser.add_subparsers(parser_class=argparse.ArgumentParser)
         self.ui: term.UI = term.UI()
         self.config: LumaConfig | None = None
-        self.environment_mgr: str = ""
+        self.python = sys.executable
         self.version: str = pkg_meta.version("luma") or "development"
         self.hooks: HookManager = HookManager(self.ui)
         self.component_handlers: dict[str, Callable[[Self, dict[str, Any]], None]] = {}
@@ -64,7 +60,7 @@ class Core:
             help="show the version and exit",
         )
         bot_path_option.add_to_parser(self.parser)
-        environment_option.add_to_parser(self.parser)
+        python_option.add_to_parser(self.parser)
         verbose_option.add_to_parser(self.parser)
         self.parser._positionals.title = "Commands"
 
@@ -103,26 +99,36 @@ class Core:
         self.ui.echo(f"Registering command [info]{command.name}[/info]", verbosity=2)
         command.register_to(self.subparsers)
 
-    @property
-    def python_cmd(self) -> list[str]:
-        return ["python"] if self.environment_mgr == "local" else [self.environment_mgr, "run", "python"]
-
-    def exec_script(self, script: str) -> str:
-        proc = subprocess.run(self.python_cmd + ["-c", script, "-X", "utf8"], stdout=subprocess.PIPE, shell=True)
-        proc.check_returncode()
-        self.ui.echo(f"Run Python script: [primary]{escape(script)}[/]", verbosity=2)
-        return proc.stdout.decode("utf-8")
-
-    def _propagate_interpreter_path(self):
-        import site
-
-        self.ui.echo("[info]Propagating [req]sys.path[/req] with target interpreter!", verbosity=1)
-        pre_sys_path = set(sys.path)
-        site_prefixes = self.exec_script("import site; [print(p) for p in site.PREFIXES]").splitlines()
-        post_sys_path = site.addsitepackages(pre_sys_path.copy(), prefixes=site_prefixes)
-        if post_sys_path:
-            for extra_pth in post_sys_path - pre_sys_path:
-                self.ui.echo(f"Added [info]{extra_pth}[/] to [req]sys.path[/].", verbosity=2)
+    def _reforge_interpreter_env(self, py_path: str | None):
+        orig_py_path = py_path
+        if py_path is None:
+            self.ui.echo("[info]Guessing Python path from invoking subprocess...", verbosity=1)
+            py_path = subprocess.run(
+                ["python", "-X", "utf8", "-c", "import sys;print(sys.executable, end='')"],
+                shell=True,
+                encoding="utf-8",
+                stdout=subprocess.PIPE,
+            ).stdout
+        if self.python != py_path:
+            self.ui.echo("[info]Regenerating [primary]Luma[/primary] process")
+            subprocess.run(
+                [
+                    py_path,
+                    "-c",
+                    "\n".join(
+                        [
+                            "import site",
+                            "import sys",
+                            f"site.addsitepackages(set(sys.path), [{json.dumps(sys.prefix)}])",
+                            "import luma.core",
+                            "luma.core.main()",
+                        ]
+                    ),
+                ]
+                + sys.argv[1:]
+                + (["--python-path", py_path] if orig_py_path is None else []),
+            )
+            sys.exit(0)
 
     def _load_components(self) -> None:
         for ep in pkg_meta.entry_points(group="luma.component"):
@@ -166,16 +172,13 @@ class Core:
             self.parser.print_help(sys.stderr)
             sys.exit(1)
 
-        project_root = Path(options.path or os.getenv("LUMA_PROJECT_ROOT") or os.getenv("PROJECT_ROOT") or os.getcwd())
-        self.environment_mgr = options.environment_manager or guess_environment(project_root)
-        if not self.environment_mgr:
-            self.ui.echo("[error]Unable to determine environment manager!", err=True)
-            sys.exit(1)
-        self.ui.echo(f"[primary]Luma[/] is running with [req]{self.environment_mgr}", verbosity=1)
+        self.project_root = Path(
+            options.path or os.getenv("LUMA_PROJECT_ROOT") or os.getenv("PROJECT_ROOT") or os.getcwd()
+        )
 
         try:
-            self._load_luma_file(project_root / "luma.toml")
-            self._propagate_interpreter_path()
+            self._reforge_interpreter_env(options.python_path)
+            self._load_luma_file(self.project_root / "luma.toml")
             self._load_components()
             self._bootstrap_luma_file()
             f(self, options)

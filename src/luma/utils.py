@@ -28,26 +28,6 @@ def test_executable(executable: str) -> bool:
     )
 
 
-def guess_environment(project_root: Path) -> Literal["local", "pdm", "poetry", ""]:
-    with suppress(Exception):
-        build_backend: str = tomlkit.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))["build-system"]["build-backend"]  # type: ignore
-        if "poetry" in build_backend and test_executable("poetry"):
-            return "poetry"
-        elif test_executable("pdm"):
-            return "pdm"
-        proc = subprocess.run(
-            ["python", "-c", "import sys; print(sys.prefix); print(sys.base_prefix)", "-X", "utf8"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True,
-        )
-        proc.check_returncode()
-        output = proc.stdout.decode("utf-8")
-        sys_prefix, sys_base_prefix = output.splitlines()
-        return "local" if sys_prefix != sys_base_prefix else ""
-    return ""
-
-
 def load_from_string(import_str: str) -> Any:
     module_str, _, attrs_str = import_str.partition(":")
     if not module_str or not attrs_str:

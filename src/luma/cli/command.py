@@ -20,13 +20,7 @@ bot_path_option = Option(
     help="Specify bot directory (env var: LUMA_PROJECT_ROOT / PROJECT_ROOT)",
 )
 
-environment_option = Option(
-    "-e",
-    "--environment-manager",
-    help="Specify the environment manager, will guess by default (virtualenv / PDM / Poetry)",
-    choices=("pdm", "poetry", "venv"),
-    default="",
-)
+python_option = Option("-py", "--python-path", help="Specify Python path")
 
 
 class Command(abc.ABC):
@@ -67,7 +61,7 @@ class Command(abc.ABC):
 
         # Add necessary options
         bot_path_option.add_to_parser(parser)
-        environment_option.add_to_parser(parser)
+        python_option.add_to_parser(parser)
 
         parser.set_defaults(handler=command.handle)
 
